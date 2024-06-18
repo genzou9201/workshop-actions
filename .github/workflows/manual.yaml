@@ -1,23 +1,23 @@
 name: Manual
-#on:
-#  workflow_dispatch:
-#    inputs:
-#      greeting:
-#        type: string
-#        default: Hello
-#        required: true
-#        description: A cheerful word
-#
-#jobs:
-#  run:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - run: echo "${{ inputs.greeting }}"
+on:
+  workflow_dispatch:
+    inputs:
+      greeting:
+        type: string
+        default: Hello
+        required: true
+        description: A cheerful word
 
-on: push                          # イベント
-jobs:                             # ジョブの定義
-  hello-genzou:                          # ジョブID
-    runs-on: ubuntu-latest        # ランナー
-    steps:                        # ステップの定義
-      - run: echo "Hello, world"  # シェルコマンドの実行
-      - uses: actions/checkout@v4 # アクションの呼び出し
+jobs:
+  genzou:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ inputs.greeting }}"
+
+#on: push                          # イベント
+#jobs:                             # ジョブの定義
+#  hello-genzou:                          # ジョブID
+#    runs-on: ubuntu-latest        # ランナー
+#    steps:                        # ステップの定義
+#      - run: echo "Hello, world"  # シェルコマンドの実行
+#      - uses: actions/checkout@v4 # アクションの呼び出し
