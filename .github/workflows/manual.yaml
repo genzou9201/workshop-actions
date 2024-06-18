@@ -1,12 +1,24 @@
 name: Manual2
+#on:
+#  workflow_dispatch:
+#    inputs:
+#      greeting:
+#        type: string
+#        default: Hello
+#        required: true
+#        description: A cheerful word
 on:
   workflow_dispatch:
     inputs:
-      greeting:
-        type: string
-        default: Hello
+      platform:
+        description: platform
         required: true
-        description: A cheerful word
+        default: All Platforms
+        type: choice
+        options:
+          - All Platforms
+          - iOS
+          - Android
 
 jobs:
   genzou:
