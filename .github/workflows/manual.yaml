@@ -1,15 +1,188 @@
-name: Manual
+#name: Manual
+#on:
+#  workflow_dispatch:
+#    inputs:
+#      greeting:
+#        type: string
+#        default: Hello
+#        required: true
+#        description: A cheerful word
+#
+#jobs:
+#  genzou:
+#    runs-on: ubuntu-latest        # ランナー
+#    steps:                        # ステップの定義
+#      - run: echo "Manual, world"  # シェルコマンドの実行
+name: CD for development
+
 on:
   workflow_dispatch:
     inputs:
-      greeting:
-        type: string
-        default: Hello
+      platform:
+        description: platform
         required: true
-        description: A cheerful word
+        default: All Platforms
+        type: choice
+        options:
+          - All Platforms
+          - iOS
+          - Android
 
 jobs:
-  genzou:
-    runs-on: ubuntu-latest        # ランナー
-    steps:                        # ステップの定義
-      - run: echo "Manual, world"  # シェルコマンドの実行
+  bump-version-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read fvm config
+        uses: kuhnroyal/flutter-fvm-config-action@v2
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Bump version code
+        run: flutter pub run cider bump build
+
+      - name: Commit pubspec.yaml
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: pubspec.yaml
+          message: 'Bump version code'
+          default_author: github_actions
+
+  android:
+    needs: bump-version-code
+    if: github.event.inputs.platform == 'All Platforms' || github.event.inputs.platform == 'Android'
+    environment:
+      name: development
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: 17
+          cache: gradle
+
+      - name: Read fvm config
+        uses: kuhnroyal/flutter-fvm-config-action@v2
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Build release
+        run: flutter build apk --release --dart-define-from-file=dart_defines/dev.json
+
+      - name: Google Authentication
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.CREDENTIAL_FILE_CONTENT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup firebase-tools
+        run: npm install -g firebase-tools
+
+      - name: Upload Firebase App Distribution
+        run: |
+          firebase appdistribution:distribute \
+            --app '${{ secrets.FIREBASE_ANDROID_APP_ID }}' \
+            --groups 'testers' \
+            ./build/app/outputs/flutter-apk/app-release.apk
+
+  ios:
+    needs: bump-version-code
+    if: github.event.inputs.platform == 'All Platforms' || github.event.inputs.platform == 'iOS'
+    environment:
+      name: development
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Xcode Select Version
+        uses: mobiledevops/xcode-select-version-action@v1
+        with:
+          xcode-select-version: 15.3
+
+      - name: Read fvm config
+        uses: kuhnroyal/flutter-fvm-config-action@v2
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Run flutter build iOS
+        id: build
+        run: flutter build ios --release --no-codesign --dart-define-from-file=dart_defines/dev.json
+
+      - name: Decode App Store Connect API Key
+        run: |
+          mkdir ./ios/private_keys
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" | base64 --decode > ./ios/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8
+
+      - name: Build Archive
+        run: |
+          xcodebuild archive \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -workspace ./ios/Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath ./build/ios/Runner.xcarchive
+
+      - name: Build IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath ./build/ios/Runner.xcarchive \
+            -exportPath ./build/ios/ipa \
+            -exportOptionsPlist ./ios/options/dev/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }} \
+            -authenticationKeyPath $(pwd)/ios/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8
+
+      - name: Google Authentication
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.CREDENTIAL_FILE_CONTENT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup firebase-tools
+        run: npm install -g firebase-tools
+
+      - name: Upload Firebase App Distribution
+        run: |
+          firebase appdistribution:distribute \
+            --app '${{ secrets.FIREBASE_IOS_APP_ID }}' \
+            --groups 'testers' \
+            ./build/ios/ipa/Runner.ipa
