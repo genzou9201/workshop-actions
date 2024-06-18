@@ -12,9 +12,9 @@
 #      - name: Run a one-liner script
 #        run: echo "Hello, world!"
 #
-##name: Manual2
-##on:
-##  workflow_dispatch:
+name: Manual2
+on:
+  workflow_dispatch:
 ##    inputs:
 ##      greeting:
 ##        type: string
@@ -34,13 +34,13 @@
 ##          - iOS
 ##          - Android
 #
-##jobs:
-##  genzou:
-##    runs-on: ubuntu-latest
-##    steps:
-##      - name: echoの実行
-##        run: echo "${{ inputs.greeting }}"
-#
+jobs:
+  genzou:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echoの実行
+        run: echo "${{ inputs.greeting }}"
+
 ##jobs:
 ##  bump-version-code:
 ##    runs-on: ubuntu-latest
