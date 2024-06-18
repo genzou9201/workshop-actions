@@ -1,57 +1,9 @@
-#name: Manual Trigger Workflow
-#
-#on:
-#  workflow_dispatch:
-#
-#jobs:
-#  build:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#      - name: Run a one-liner script
-#        run: echo "Hello, world!"
-#
 name: Manual
 on:
   workflow_dispatch:
-##    inputs:
-##      greeting:
-##        type: string
-##        default: Hello
-##        required: true
-##        description: A cheerful word
-##on:
-##  workflow_dispatch:
-##    inputs:
-##      platform:
-##        description: platform
-##        required: true
-##        default: All Platforms
-##        type: choice
-##        options:
-##          - All Platforms
-##          - iOS
-##          - Android
-#
+
 jobs:
   genzou:
-    runs-on: ubuntu-latest
-    steps:
-      - name: echoの実行
-        run: echo "${{ inputs.greeting }}"
-
-##jobs:
-##  bump-version-code:
-##    runs-on: ubuntu-latest
-##    steps:
-##      - name: echoの実行
-##        run: echo "${{ inputs.greeting }}"
-#
-##on: push                          # イベント
-##jobs:                             # ジョブの定義
-##  hello-genzou:                          # ジョブID
-##    runs-on: ubuntu-latest        # ランナー
-##    steps:                        # ステップの定義
-##      - run: echo "Hello, world"  # シェルコマンドの実行
-##      - uses: actions/checkout@v4 # アクションの呼び出し
+    runs-on: ubuntu-latest        # ランナー
+    steps:                        # ステップの定義
+      - run: echo "Manual, world"  # シェルコマンドの実行
