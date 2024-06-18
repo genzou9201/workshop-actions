@@ -24,7 +24,8 @@ jobs:
   genzou:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "${{ inputs.greeting }}"
+      - name: echoの実行
+        run: echo "${{ inputs.greeting }}"
 
 #on: push                          # イベント
 #jobs:                             # ジョブの定義
