@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: echoの実行
-        run: echo "${{ inputs.greeting }}"
+        run: echo # "${{ inputs.greeting }}"
 
 #on: push                          # イベント
 #jobs:                             # ジョブの定義
