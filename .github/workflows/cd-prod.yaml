@@ -97,3 +97,4 @@ jobs:
           packageName: com.genzou9201.workshop_actions
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: production
+          status: draft
