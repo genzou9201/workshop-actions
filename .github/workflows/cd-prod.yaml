@@ -9,8 +9,8 @@ on:
         default: All Platforms
         type: choice
         options:
-          - All Platforms
-          - iOS
+#          - All Platforms
+#          - iOS
           - Android
 
 jobs:
@@ -83,7 +83,7 @@ jobs:
 
       # AAB ファイルのビルド
       - name: Build release
-        run: flutter build appbundle --release --dart-define-from-file=dart_defines/prod.json
+        run: flutter build appbundle --release
         env:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
