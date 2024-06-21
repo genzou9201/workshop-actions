@@ -1,0 +1,15 @@
+name: Manual
+on:
+  workflow_dispatch:
+    inputs:
+      greeting:
+        type: string
+        default: Hello
+        required: true
+        description: A cheerful word
+
+jobs:
+  genzou:
+    runs-on: ubuntu-latest        # ランナー
+    steps:                        # ステップの定義
+      - run: echo "Manual, world"  # シェルコマンドの実行
