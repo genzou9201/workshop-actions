@@ -93,7 +93,7 @@ jobs:
       - name: Upload AAB file to Play Console
         uses: r0adkll/upload-google-play@v1
         with:
-          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON_3 }}
           packageName: com.genzou9201.workshop_actions
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: internal
