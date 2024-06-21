@@ -1,0 +1,97 @@
+name: CD for workshop production
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: platform
+        required: true
+        default: All Platforms
+        type: choice
+        options:
+          - All Platforms
+          - iOS
+          - Android
+
+jobs:
+  bump-version-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read fvm config
+        uses: kuhnroyal/flutter-fvm-config-action@v2
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Bump version code
+        run: flutter pub run cider bump build
+
+      - name: Commit pubspec.yaml
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: pubspec.yaml
+          message: 'Bump version code'
+          default_author: github_actions
+
+  android:
+    needs: bump-version-code
+    if: github.event.inputs.platform == 'All Platforms' || github.event.inputs.platform == 'Android'
+    environment:
+      name: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+
+      # ソースコードの取得
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # fvm セットアップ
+      - name: Read fvm config
+        uses: kuhnroyal/flutter-fvm-config-action@v2
+
+      # Flutter の取得
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      # Java のセットアップ
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: 17
+          cache: gradle
+
+      # 署名用のキーストアを環境変数から取得してプロジェクト内に配置
+      - name: Decode keystore
+        run: |
+          echo '${{ secrets.KEYSTORE_FILE_BASE64 }}' | base64 --decode > keystore.jks
+        working-directory: android/app
+
+      # AAB ファイルのビルド
+      - name: Build release
+        run: flutter build appbundle --release --dart-define-from-file=dart_defines/prod.json
+        env:
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+
+      # Play Console へアプリファイルをアップロード
+      - name: Upload AAB file to Play Console
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          packageName: com.genzou9201.workshop_actions
+          releaseFiles: build/outputs/bundle/release/app-release.aab
+          track: production
